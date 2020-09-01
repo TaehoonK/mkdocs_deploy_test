@@ -1,0 +1,292 @@
+openapi: 3.0.2
+info:
+  title: PnTML Moving Features API
+  description: >-
+    This is the OpenAPI definition of Moving Features API specification that conforms to the OGC Moving Features Encoding Extension - JSON.
+    xxxxx.
+  version: 1.0.0
+  contact:
+    name: ARIC Data Platform Research Team
+    url: https://www.airc.aist.go.jp/en/dprt/
+  license:
+    name: Apache License 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: https://pntml.net:{port}/dev/mf/v1
+    description: Development server
+    variables:
+      port:
+        enum:
+          - xxxx
+          - xxxx
+        default: xxxx
+  - url: https://pntml.net:{port}/mf/v1
+    description: Test server
+    variables:
+      port:
+        default: xxxx
+tags:
+  - name: MovingFeatureCollections
+    description: Collections of moving features to be logically managed by a user
+  - name: MovingFeatures
+    description: Moving feature data, including the temporal geometry, temporal properties, etc.
+  - name: TemporalGeometries
+    description: The spatial change over time (temporal geometry), representing the movement of the rigid or nonrigid body of a feature
+  - name: TemporalProperties
+    description: The thematic change over time (temporal property), representing the variation of the value of any descriptive characteristic of a feature.
+  - name: Processes
+    description: Asynchronized Operations (e.g., aggregation, learning)
+  - name: Jobs
+    description: Status of Operations
+paths:
+  /:
+    get:
+      summary: Landing Page of this API
+      description: >-
+        The landing page provides links to access the API definition and the metadata in this dataset.
+      operationId: getLandingPage
+      tags:
+        - Capabilities
+      responses:
+        200:
+          description: links to the API capabilities
+          content:
+            application/json:
+              schema:
+                $ref: schemas/LandingPage.yml
+            text/html:
+              schema:
+                type: string
+  /collections:
+    post:
+      summary: Registers metadata about a collection of moving features
+      description: >-
+        A user SHOULD register metadata about a collection of moving features into the system.
+        This method is mandatory to be implemented.
+      operationId: registerMetadata
+      tags:
+        - MovingFeatureCollections
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: schemas/MFCDescription.yml
+      responses:
+        201:
+          description: >- 
+            Successful Create a collection to manage moving features. 
+            You can insert moving features by using URL.
+          content:
+            application/json:
+              schema:
+                $ref: schemas/Link.yml
+              example:
+                link:
+                  href: https://pntml.net:{port}/dev/mf/v1/collections/Miraikan
+                  title: Miraikan
+        default:
+          $ref: schemas/DefaultError.yml
+    get:
+      summary: Retrieves catalogs of Moving Features Collection
+      description: >-
+        A user can retrieve catalogs to access collections by simple filtering and a limit.
+        This method is mandatory to be implemented.
+      operationId: searchCatalog
+      tags:
+        - MovingFeatureCollections
+      parameters:
+        - $ref: parameters/timeOption.yml
+        - $ref: parameters/bboxOption.yml
+        - $ref: parameters/tagOption.yml
+        - $ref: parameters/limit.yml
+      responses:
+        200:
+          description: A list of catalogs about collections of moving features
+          content:
+            application/geo+json:
+              schema:
+                $ref: schemas/CatalogCollection.yml
+        default:
+          $ref: schemas/DefaultError.yml
+  /collections/{title}:
+    parameters:
+      - $ref: parameters/title.yml
+    delete:
+      summary: Deletes the {title} collection including metadata and moving features. 
+      tags:
+        - MovingFeatures
+      description: >-
+        Only an authorized user can delete a collection.
+        The collection catalog should be deleted.
+        Before finishing the job, a user cannot use the same title to create a collection.
+        This method is optional to be implemented. 
+      operationId: deleteCollection
+      responses:
+        202:
+          description: Accepted a delete request. 
+          content:
+            application/json:
+              schema:
+                $ref: schemas/Job.yml
+        404:
+          description: A collection with the specified name was not found.
+        default:
+          $ref: schemas/DefaultError.yml
+    get:
+      summary: Accesses metadata about the collection with the specified name.
+      description: >-
+        A user can access metadata that the user defined for the registration.
+        This method is mandatory to be implemented.
+      operationId: accessMetadata
+      tags:
+        - MovingFeatures
+      responses:
+        200:
+          description: the metadata being returned
+          content:
+            application/json:
+              schema:
+                $ref: schemas/MFCDescription.yml
+        404:
+          description: A collection with the specified name was not found.
+    post:
+      summary: Inserts Moving Features into the collection whose name is {title}
+      description: >-
+        A user inserts a set of moving features or a moving feature into a specific collection
+        This method is mandatory to be implemented.
+      operationId: insertFeatures
+      tags:
+        - MovingFeatures
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: 'schemas/MF-JSON_Trajectory.schema.json#/definitions/feature'
+                - $ref: 'schemas/MF-JSON_Trajectory.schema.json#/definitions/featureCollection'
+                - $ref: 'schemas/MF-JSON_Prism.schema.json#/definitions/movingFeature'
+                - $ref: 'schemas/MF-JSON_Prism.schema.json#/definitions/movingFeatureCollection'
+            example:
+              $ref: examples/feature.yml
+      responses:
+        200:
+          description: Successfully inserted
+          content:
+            application/json:
+              schema:
+                $ref: schemas/Link.yml
+              example:
+                link:
+                  href: https://pntml.io/dev/mf/v1/collections/{title}/mfeatures/feature-000001
+                  title: feature-000001
+        default:
+          $ref: schemas/DefaultError.yml
+  /collections/{title}/mfeatures:
+    get:
+      summary: Retrieves moving features
+      operationId: retrieveFeatures
+      tags:
+        - MovingFeatures
+      parameters:
+        - $ref: parameters/title.yml
+        - $ref: parameters/time.yml
+        - $ref: parameters/limit.yml      
+        - $ref: parameters/bboxOption.yml
+        - $ref: parameters/tagOption.yml
+      responses:
+        200:
+          description: Returns Links of moving features to access their properties
+          content:
+            application/json:
+              schema:
+                $ref: schemas/Links.yml
+              example:
+                - href: https://pntml.io/dev/mf/v1/collections/{title}/mfeatures/feature-000001
+                  title: feature-000001
+                - href: https://pntml.io/dev/mf/v1/collections/{title}/mfeatures/feature-000002
+                  title: feature-000002
+                - href: https://pntml.io/mf/v1/collections/{title}/mfeatures/feature-000003
+                  title: feature-000003
+        default:
+          $ref: schemas/DefaultError.yml
+  /collections/{title}/mfeatures/{featureId}:
+    parameters:
+      - $ref: parameters/title.yml
+      - $ref: parameters/featureId.yml
+    delete:
+      summary: Deletes the feature whose ID is {featureId}
+      operationId: deleteFeature
+      tags:
+        - MovingFeatures
+      responses:
+        204:
+          description: successfully deleted
+        default:
+          $ref: schemas/DefaultError.yml
+    get:
+      summary: Accesses the moving feature by featureId
+      operationId: accessFeature
+      tags:
+        - MovingFeatures
+      responses:
+        200:
+          description: Moving feature data
+          content:
+            application/json:
+              schema:
+                $ref: 'schemas/MF-JSON_Prism.schema.json#/definitions/movingFeature'
+              example:
+                $ref: examples/featurefull.yml
+        default:
+          $ref: schemas/DefaultError.yml
+  /collections/{title}/mfeatures/{featureId}/temporalGeometry:
+    parameters:
+      - $ref: parameters/title.yml
+      - $ref: parameters/featureId.yml
+    get:
+      summary: Accesses only the movement data of the moving feature whose ID is {featureId}.
+      operationId: accessTemporalGeometry
+      description: >-
+        A user can access only the movement data of a specified moving feature.
+        This method is mandatory to be implemented.
+      tags:
+        - TemporalGeometries
+      responses:
+        200:
+          description: Temporal geometry data
+          content:
+            application/json:
+              schema:
+                $ref: 'schemas/MF-JSON_Prism.schema.json#/definitions/temporalGeometry'
+              example:
+                $ref: examples/temporalGeometry.yml
+        default:
+          $ref: schemas/DefaultError.yml
+    post:
+      summary: Adds movement data into the moving feature whose ID is {featureId}.
+      description: >-
+        A user can add more movement data into a specified moving feature.
+        This method is mandatory to be implemented.
+      operationId: insertFeatures
+      tags:
+        - TemporalGeometries
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: 'schemas/MF-JSON_Prism.schema.json#/definitions/temporalGeometry'
+            example:
+              $ref: examples/temporalGeometry.yml
+      responses:
+        201:
+          description: Returns link of the temporal geometry
+          content:
+            application/json:
+              schema:
+                $ref: schemas/Link.yml
+              example:
+                link:
+                  href: https://pntml.io/dev/mf/v1/collections/{title}/mfeatures/feature-000001/temporalGeometry/geometry-000002
+                  title: geometry-000002
+        default:
+          $ref: schemas/DefaultError.yml
