@@ -2,13 +2,13 @@
 
 ### PntML Common API
 
-[Details](https://taehoonk.github.io/mkdocs_deploy_test/pntml-api.html)
+[Details](/pntml-api.html)
 
 ### 3D Map API
 
-[Details](https://taehoonk.github.io/mkdocs_deploy_test/pcm-api.html)
+[Details](/pcm-api.html)
 
 ### Moving Features API
 
-[Details](https://taehoonk.github.io/mkdocs_deploy_test/mf-api.html)
+[Details](/mf-api.html)
 
