@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      - run: npm install redoc
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -36,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: python3 -m pip install -r ./requirements.txt
 
-      - run: mkdocs build
+      - run: redoc-cli bundle -o index.html ./mddocs/mf/mf-api.yaml
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
