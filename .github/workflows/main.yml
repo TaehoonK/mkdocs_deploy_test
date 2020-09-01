@@ -14,6 +14,7 @@ jobs:
         with:
           node-version: '12'
       - run: npm install redoc
+      - run: npm install redoc-cli
 
       - name: Setup Python
         uses: actions/setup-python@v2
